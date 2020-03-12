@@ -3,4 +3,5 @@ Twitch chat can interact direktly with our PC and your games. Keyboad and Mouse 
 
 ## Before using
 Fill the missing parameter in config.ini
+
 Check if everything is set to your streams desire in allowed_key.py
