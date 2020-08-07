@@ -1,10 +1,10 @@
-import socket
 from configparser import ConfigParser
 from time import sleep
 
 import pyautogui as p
 
 from allowed_key import *
+from twitch_chat import join_chat
 
 
 def load_params(file):
@@ -18,71 +18,6 @@ def load_params(file):
     config.read(file)
 
     return config['DEFAULT']
-
-
-def join_chat(params):
-    """
-    bot joins chat and posts a message in chat
-
-    :param params: params from config
-    :return: irc object
-    """
-    irc = socket.socket()
-    irc.connect((params['server'], int(params['port'])))
-    irc.send(f'PASS {params["oath"]}\nNICK {params["bot"]}\n Join #{params["channel"]}\n'.encode())
-
-    loading = True
-    while loading:
-        read_buffer_join = irc.recv(1024)
-        read_buffer_join = read_buffer_join.decode()
-
-        for line in read_buffer_join.split('\n')[0:-1]:
-            # checks if loading is complete
-            loading = 'End of /NAMES list' not in line
-
-    # confirm messages
-    send_to_chat(irc, 'Joined Channel', params)
-    print(f'joined:{params["channel"]}')
-
-    return irc
-
-
-def send_to_chat(irc, message, params):
-    """
-    sends a message in chat
-
-    :param irc: irc object
-    :param message: message for chat
-    :param params: params from config
-    :return:
-    """
-    message_temp = f'PRIVMSG #{params["channel"]} :{message}'
-    irc.send(f'{message_temp}\n'.encode())
-
-
-def listen_to_chat(irc):
-    """
-    listens to chat and uses massage_to_interaction
-
-    :param irc: irc object
-    :return: this is a server loop
-    """
-    while True:
-        try:
-            read_buffer = irc.recv(1024).decode()
-        except:
-            # incase there is nothing
-            read_buffer = ''
-        for line in read_buffer.split('\r\n'):
-            # ping pong to stay alive | PRIVMSG marks every interaction with users
-            if 'PING' in line and 'PRIVMSG' not in line:
-                irc.send('PONG tmi.twitch.tv\r\n'.encode())
-
-            # only interact if
-            elif line != '':
-                # makes message to interaction
-                message = get_message(line)
-                message_to_interaction(message)
 
 
 def message_to_interaction(message):
@@ -121,33 +56,14 @@ def message_to_interaction(message):
                 ...
 
 
-def get_user(line):
-    """
-
-    :param line: answer line from twitch
-    :return: user
-    """
-    parts = line.split(':', 2)
-    return parts[1].split('!', 1)[0]
-
-
-def get_message(line):
-    """
-
-    :param line: answer line from twitch
-    :return: message
-    """
-    try:
-        message = line.split(':', 2)[2]
-    except IndexError:
-        message = ''
-    return message
-
-
 def main():
     params = load_params('config.ini')
-    irc = join_chat(params)
-    listen_to_chat(irc)
+    chat = join_chat(oath=params['oath'], channel_name=params['channel'], bot_name=params['bot'])
+    chat.send_to_chat('connected')
+    while True:
+        _, message = chat.listen_to_chat()
+        if message:
+            message_to_interaction(message)
 
 
 if __name__ == '__main__':
