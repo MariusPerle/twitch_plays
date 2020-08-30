@@ -58,7 +58,7 @@ def message_to_interaction(message):
 
 def main():
     params = load_params('config.ini')
-    chat = TwitchChat(channel_name=params['channel'])
+    chat = TwitchChat(channel_name=params['channel'], bot_name=params['bot_name'])
     while True:
         _, message = chat.listen_to_chat()
         if message:
