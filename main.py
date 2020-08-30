@@ -4,7 +4,7 @@ from time import sleep
 import pyautogui as p
 
 from allowed_key import *
-from twitch_chat import join_chat
+from twitch_chat import TwitchChat
 
 
 def load_params(file):
@@ -58,8 +58,7 @@ def message_to_interaction(message):
 
 def main():
     params = load_params('config.ini')
-    chat = join_chat(oath=params['oath'], channel_name=params['channel'], bot_name=params['bot'])
-    chat.send_to_chat('connected')
+    chat = TwitchChat(channel_name=params['channel'])
     while True:
         _, message = chat.listen_to_chat()
         if message:
